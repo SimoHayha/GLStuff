@@ -25,6 +25,8 @@
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="RendererApp.h" />
     <ClInclude Include="Resources.h" />
+    <ClInclude Include="Triangle.h" />
+    <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Graphics.cpp" />

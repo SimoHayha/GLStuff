@@ -11,6 +11,9 @@
 #include <GL/glew.h>
 #include <glm\glm.hpp>
 
+#include "Vertex.h"
+#include "Triangle.h"
+#include "Graphics.h"
 #include "Defines.h"
 
 class MeshStream
@@ -19,8 +22,10 @@ public:
 	MeshStream(std::ifstream& stream);
 
 	uint32_t	ReadUInt32();
+	uint16_t	ReadUInt16();
 	void		ReadString(std::wstring* output);
 	void		ReadString(std::wstring* output, uint32_t count);
+	GLbyte		ReadByte();
 
 	template <typename T>
 	void		ReadStruct(T* output, size_t size = sizeof(T));
@@ -36,12 +41,8 @@ void MeshStream::ReadStruct(T* output, size_t size /*= sizeof(T)*/)
 {
 	m_stream.read(reinterpret_cast<char*>(output), size);
 #ifdef _DEBUG
-	if (m_stream.failbit == std::ios_base::eofbit)
-		std::cerr << "ERROR: ReadStruct failure (eofbit)" << std::endl;
-	else if (m_stream.failbit == std::ios_base::failbit)
-		std::cerr << "ERROR: ReadStruct failure (failbit)" << std::endl;
-	else if (m_stream.failbit == std::ios_base::badbit)
-		std::cerr << "ERROR: ReadStruct failure (badbit)" << std::endl;
+	if (m_stream.fail())
+		std::cerr << "ERROR: ReadStruct failure" << std::endl;
 #endif
 }
 
@@ -79,10 +80,13 @@ public:
 		GLuint	PixelShader;
 	};
 
-	static std::future<void>	LoadFromFileAsync(std::string const& meshFilename, std::vector<Mesh*>& loadedMesh, bool clearLoadedMeshesVector = true);
+	void	Render(Graphics& graphics, glm::mat4x4 const& model);
+
+	static std::future<void>	LoadFromFileAsync(Graphics& graphics, std::wstring const& meshFilename, std::wstring const& shaderPathLocation, std::wstring const& texturePathLocation, std::vector<Mesh*>& loadedMesh, bool clearLoadedMeshesVector = true);
 
 private:
-	static Mesh*	Read(MeshStream& stream, std::vector<Mesh*>& loadedMesh);
+	static Mesh*	Read(Graphics& graphics, MeshStream& stream, std::wstring const& shaderPathLocation, std::wstring const& texturePathLocation);
+	static void		StripPath(std::wstring& path);
 
 private:
 	std::vector<SubMesh>	m_submeshes;
@@ -90,6 +94,10 @@ private:
 	std::vector<GLuint>		m_vertexBuffers;
 	std::vector<GLuint>		m_skinningVertexBuffer;
 	std::vector<GLuint>		m_indexBuffers;
+	std::vector<Triangle>	m_triangles;
+
+	std::vector<std::vector<Vertex>>	m_tmpVertexBuffers;
+	std::vector<std::vector<USHORT>>	m_tmpIndexBuffers;
 
 	std::wstring	m_name;
 };

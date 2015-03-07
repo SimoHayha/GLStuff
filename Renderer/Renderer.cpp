@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include <glm\glm.hpp>
 #include <glm\gtc\matrix_transform.hpp>
 
@@ -17,29 +19,26 @@ Renderer::~Renderer()
 
 bool Renderer::Initialize()
 {
-	glGenVertexArrays(1, &m_vertexArrayID);
-	glBindVertexArray(m_vertexArrayID);
-
-	static const GLfloat g_vertex_buffer_data[] = {
-		-1.0f, -1.0f, 0.0f,
-		1.0f, -1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-	};
-
-	// Generate 1 buffer, put the resulting identifier in vertexbuffer
-	glGenBuffers(1, &m_vertexBuffer);
-
-	// The following commands will talk about our 'vertexbuffer' buffer
-	glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
-
-	// Give our vertices to OpenGL.
-	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
-
 	m_shader = Resources::LoadShader("diffuse.vertex", "diffuse.fragment");
 
-	std::vector<Mesh*>	meshes;
-	auto	loadHumanoidTask = Mesh::LoadFromFileAsync("teapot.cmo", meshes);
+	Graphics graphics;
+	auto	loadHumanoidTask = Mesh::LoadFromFileAsync(graphics, L"humanoid.cmo", L"", L"", m_meshes);
 	//loadHumanoidTask.wait();
+
+	//static const GLfloat g_vertex_buffer_data[] = {
+	//	-1.0f, -1.0f, 0.0f,
+	//	1.0f, -1.0f, 0.0f,
+	//	0.0f, 1.0f, 0.0f,
+	//};
+
+	//// Generate 1 buffer, put the resulting identifier in vertexbuffer
+	//glGenBuffers(1, &m_vertexBuffer);
+
+	//// The following commands will talk about our 'vertexbuffer' buffer
+	//glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
+
+	//// Give our vertices to OpenGL.
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 
 	return true;
 }
@@ -55,11 +54,11 @@ void Renderer::Render(Graphics& graphics)
 	glUseProgram(m_shader);
 
 	// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-	glm::mat4 Projection = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
+	glm::mat4 Projection = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 1000.0f);
 	// Camera matrix
 	glm::mat4 View = glm::lookAt(
-		glm::vec3(4, 3, 3), // Camera is at (4,3,3), in World Space
-		glm::vec3(0, 0, 0), // and looks at the origin
+		glm::vec3(4, 3, 800), // Camera is at (4,3,3), in World Space
+		glm::vec3(0, 50, 0), // and looks at the origin
 		glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
 		);
 	// Model matrix : an identity matrix (model will be at the origin)
@@ -77,19 +76,27 @@ void Renderer::Render(Graphics& graphics)
 	glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
 	// 1rst attribute buffer : vertices
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
-	glVertexAttribPointer(
-		0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-		3,                  // size
-		GL_FLOAT,           // type
-		GL_FALSE,           // normalized?
-		0,                  // stride
-		(void*)0            // array buffer offset
-		);
+	for (auto& mesh : m_meshes)
+	{
+		Graphics	gfx;
+		mesh->Render(gfx, Model);
 
-	// Draw the triangle !
-	glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
+		//glEnableVertexAttribArray(0);
+		//glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
+		//glVertexAttribPointer(
+		//	0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+		//	3,                  // size
+		//	GL_FLOAT,           // type
+		//	GL_FALSE,           // normalized?
+		//	0,                  // stride
+		//	(void*)0            // array buffer offset
+		//	);
 
-	glDisableVertexAttribArray(0);
+		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, )
+
+		//	// Draw the triangle !
+		//	glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
+
+		//glDisableVertexAttribArray(0);
+	}
 }

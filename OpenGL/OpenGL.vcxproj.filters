@@ -21,10 +21,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="diffuse.fragment">
-      <Filter>Header Files</Filter>
+      <Filter>Resource Files</Filter>
     </None>
     <None Include="diffuse.vertex">
-      <Filter>Header Files</Filter>
+      <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
 </Project>
