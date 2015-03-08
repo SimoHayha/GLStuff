@@ -8,12 +8,10 @@
 
 Graphics::Graphics()
 {
-	m_genBuffersLock = new std::mutex;
 }
 
 Graphics::~Graphics()
 {
-	delete m_genBuffersLock;
 }
 
 std::future<GLuint> Graphics::GetOrCreateShaderAsync(std::string const& shaderName)
@@ -78,7 +76,7 @@ GLFWwindow* Graphics::GetWindow() const
 
 void Graphics::UpdateGenBuffers()
 {
-	if (m_genBuffersLock->try_lock())
+	if (m_genBuffersLock.try_lock())
 	{
 		for (auto& task : m_genBuffers)
 		{
@@ -90,13 +88,23 @@ void Graphics::UpdateGenBuffers()
 			task->Condition.notify_one();
 		}
 		m_genBuffers.clear();
-		m_genBuffersLock->unlock();
+		m_genBuffersLock.unlock();
 	}
 }
 
 void Graphics::AddGenBuffers(GenBuffers* task)
 {
-	m_genBuffersLock->lock();
+	m_genBuffersLock.lock();
 	m_genBuffers.push_back(task);
-	m_genBuffersLock->unlock();
+	m_genBuffersLock.unlock();
+}
+
+void Graphics::Update()
+{
+
+}
+
+void Graphics::AddMeshToCollect(Mesh* mesh)
+{
+
 }

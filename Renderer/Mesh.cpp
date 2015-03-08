@@ -8,6 +8,7 @@
 //#include <io.h>
 //#include <intrin.h>
 
+#include "MeshSlotMap.h"
 #include "Mesh.h"
 
 #include <gl\glew.h>
@@ -60,11 +61,8 @@ uint16_t MeshStream::ReadUInt16()
 	return u16;
 }
 
-std::future<void> Mesh::LoadFromFileAsync(Graphics& graphics, std::wstring const& meshFilename, std::wstring const& shaderPathLocation, std::wstring const& texturePathLocation, std::vector<Mesh*>& loadedMesh, bool clearLoadedMeshesVector /*= true*/)
+std::future<void> Mesh::LoadFromFileAsync(bool& ready, Graphics& graphics, std::wstring const& meshFilename, std::wstring const& shaderPathLocation, std::wstring const& texturePathLocation, MeshSlotMap* slotMap)
 {
-	if (clearLoadedMeshesVector)
-		loadedMesh.clear();
-
 	glewExperimental = true; // Needed in core profile 
 	glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -72,12 +70,14 @@ std::future<void> Mesh::LoadFromFileAsync(Graphics& graphics, std::wstring const
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	GLFWwindow* threadWin = glfwCreateWindow(1, 1, "Thread Window", NULL, graphics.GetWindow());
 
-	auto	fct = std::async([&graphics, threadWin, meshFilename, shaderPathLocation, texturePathLocation, &loadedMesh](/*GLFWwindow* threadWin, Graphics& graphics, std::wstring const& meshFilename, std::wstring const& shaderPathLocation, std::wstring const& texturePathLocation, std::vector<Mesh*>* loadedMesh*/)
+	auto	fct = std::async([&ready, &graphics, threadWin, meshFilename, shaderPathLocation, texturePathLocation, slotMap](/*GLFWwindow* threadWin, Graphics& graphics, std::wstring const& meshFilename, std::wstring const& shaderPathLocation, std::wstring const& texturePathLocation, std::vector<Mesh*>* loadedMesh*/)
 	{
 		glfwMakeContextCurrent(threadWin);
 		GLenum	code = glewInit();
 		if (code != GLEW_OK)
 			std::cerr << "Cannot init glew for thread" << std::endl;
+
+		double start = glfwGetTime();
 
 		std::ifstream	file;
 		file.open(meshFilename, std::ios::binary);
@@ -95,43 +95,45 @@ std::future<void> Mesh::LoadFromFileAsync(Graphics& graphics, std::wstring const
 
 		for (uint32_t i = 0u; i < remainingMeshesToRead; ++i)
 		{
-			Mesh*	mesh = Read(graphics, stream, shaderPathLocation, texturePathLocation);
-			if (mesh)
-				loadedMesh.push_back(mesh);
+			Mesh*	mesh = slotMap->CreateObject();
+			mesh->m_ready = false;
+			Read(*mesh, graphics, stream, shaderPathLocation, texturePathLocation);
+			mesh->m_ready = true;
+
+			double end = glfwGetTime();
+
+			std::wcout << "Mesh " << mesh->m_name << " created in " << end - start << "ms" << std::endl;
+
+			//Mesh*	mesh = Read(graphics, stream, shaderPathLocation, texturePathLocation);
+			//if (mesh)
+			//	loadedMesh.push_back(mesh);
 		}
 
-		glfwDestroyWindow(threadWin);
+		ready = true;
 
+		glfwDestroyWindow(threadWin);
 	});
 
 	return fct;
 }
 
-Mesh* Mesh::Read(Graphics& graphics, MeshStream& stream, std::wstring const& shaderPathLocation, std::wstring const& texturePathLocation)
+void Mesh::Read(Mesh& mesh, Graphics& graphics, MeshStream& stream, std::wstring const& shaderPathLocation, std::wstring const& texturePathLocation)
 {
-	std::cout << "Submesh" << std::endl;
-
 	std::vector<std::future<void>>	innerTasks;
 
-	Mesh*	mesh = new Mesh();
-
-	stream.ReadString(&mesh->m_name);
-	std::wcout << "Name: " << mesh->m_name << std::endl;
+	stream.ReadString(&mesh.m_name);
 
 	// Read material count
 	uint32_t	numMaterials = stream.ReadUInt32();
-	mesh->m_materials.resize(numMaterials);
-	std::wcout << "Material count: " << numMaterials << std::endl;
+	mesh.m_materials.resize(numMaterials);
 
 	// Load each material
 	for (uint32_t i = 0u; i < numMaterials; ++i)
 	{
-		std::cout << "\nMaterial" << std::endl;
-		Material&	material = mesh->m_materials[i];
+		Material&	material = mesh.m_materials[i];
 
 		// Read the material name
 		stream.ReadString(&material.Name);
-		std::wcout << "Name:" << material.Name << std::endl;
 
 		// Read the ambient and diffuse properties of material
 		stream.ReadStruct(&material.Ambient, sizeof(material.Ambient));
@@ -140,12 +142,6 @@ Mesh* Mesh::Read(Graphics& graphics, MeshStream& stream, std::wstring const& sha
 		stream.ReadStruct(&material.SpecularPower);
 		stream.ReadStruct(&material.Emissive, sizeof(material.Emissive));
 		stream.ReadStruct(&material.UVTransform);
-
-		std::cout << "Ambient" << material.Ambient[0] << "," << material.Ambient[1] << "," << material.Ambient[2] << "," << material.Ambient[3] << std::endl;
-		std::cout << "Diffuse" << material.Diffuse[0] << "," << material.Diffuse[1] << "," << material.Diffuse[2] << "," << material.Diffuse[3] << std::endl;
-		std::cout << "Specular" << material.Specular[0] << "," << material.Specular[1] << "," << material.Specular[2] << "," << material.Specular[3] << std::endl;
-		std::cout << "SpecularPower" << material.SpecularPower << std::endl;
-		std::cout << "Emissive" << material.Emissive[0] << "," << material.Emissive[1] << "," << material.Emissive[2] << "," << material.Emissive[3] << std::endl;
 
 		// TODO: do something
 		// Assign the vertex shader and sampler state
@@ -207,10 +203,10 @@ Mesh* Mesh::Read(Graphics& graphics, MeshStream& stream, std::wstring const& sha
 
 	// Read the submesh information
 	uint32_t	numSubmeshes = stream.ReadUInt32();
-	mesh->m_submeshes.resize(numSubmeshes);
+	mesh.m_submeshes.resize(numSubmeshes);
 	for (uint32_t i = 0u; i < numSubmeshes; ++i)
 	{
-		SubMesh&	submesh = mesh->m_submeshes[i];
+		SubMesh&	submesh = mesh.m_submeshes[i];
 		submesh.MaterialIndex = stream.ReadUInt32();
 		submesh.IndexBufferIndex = stream.ReadUInt32();
 		submesh.VertexBufferIndex = stream.ReadUInt32();
@@ -220,7 +216,7 @@ Mesh* Mesh::Read(Graphics& graphics, MeshStream& stream, std::wstring const& sha
 
 	// Read the index buffers
 	uint32_t	numIndexBuffers = stream.ReadUInt32();
-	mesh->m_indexBuffers.resize(numIndexBuffers);
+	mesh.m_indexBuffers.resize(numIndexBuffers);
 
 	std::vector<std::vector<USHORT>> indexBuffers(numIndexBuffers);
 
@@ -245,11 +241,9 @@ Mesh* Mesh::Read(Graphics& graphics, MeshStream& stream, std::wstring const& sha
 			task->Condition.wait(lock);
 			lock.unlock();
 
-			mesh->m_indexBuffers[i] = task->BuffersIds[0];
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->m_indexBuffers[i]);
+			mesh.m_indexBuffers[i] = task->BuffersIds[0];
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.m_indexBuffers[i]);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, ibCount * sizeof(USHORT), &indexBuffers[i][0], GL_STATIC_DRAW);
-
-			std::cout << glewGetErrorString(glGetError()) << std::endl;
 
 			delete task;
 		}
@@ -257,7 +251,7 @@ Mesh* Mesh::Read(Graphics& graphics, MeshStream& stream, std::wstring const& sha
 
 	// Read the vertex buffer
 	uint32_t	numVertexBuffers = stream.ReadUInt32();
-	mesh->m_vertexBuffers.resize(numVertexBuffers);
+	mesh.m_vertexBuffers.resize(numVertexBuffers);
 
 	std::vector<std::vector<Vertex>> vertexBuffers(numVertexBuffers);
 
@@ -281,8 +275,8 @@ Mesh* Mesh::Read(Graphics& graphics, MeshStream& stream, std::wstring const& sha
 			task->Condition.wait(lock);
 			lock.unlock();
 
-			mesh->m_vertexBuffers[i] = task->BuffersIds[0];
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->m_vertexBuffers[i]);
+			mesh.m_vertexBuffers[i] = task->BuffersIds[0];
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.m_vertexBuffers[i]);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, vbCount * sizeof(Vertex), &vertexBuffers[i][0], GL_STATIC_DRAW);
 
 			delete task;
@@ -290,7 +284,7 @@ Mesh* Mesh::Read(Graphics& graphics, MeshStream& stream, std::wstring const& sha
 	}
 
 	// Create the triangle array for each submesh
-	for (SubMesh& subMesh : mesh->m_submeshes)
+	for (SubMesh& subMesh : mesh.m_submeshes)
 	{
 		std::vector<USHORT>&	ib = indexBuffers[subMesh.IndexBufferIndex];
 		std::vector<Vertex>&	vb = vertexBuffers[subMesh.VertexBufferIndex];
@@ -314,7 +308,7 @@ Mesh* Mesh::Read(Graphics& graphics, MeshStream& stream, std::wstring const& sha
 			tri.Points[2].y = v2.y;
 			tri.Points[2].z = v2.z;
 
-			mesh->m_triangles.push_back(tri);
+			mesh.m_triangles.push_back(tri);
 		}
 	}
 
@@ -323,12 +317,11 @@ Mesh* Mesh::Read(Graphics& graphics, MeshStream& stream, std::wstring const& sha
 
 	// TODO: Read the skinning vertex buffer
 
-	std::cout << "Waiting for " << innerTasks.size() << " tasks to finish" << std::endl;
-	for (auto& task : innerTasks)
-		task.wait();
+	//std::cout << "Waiting for " << innerTasks.size() << " tasks to finish" << std::endl;
+	//for (auto& task : innerTasks)
+	//	task.wait();
 
-	std::cout << "Mesh loaded successfully" << std::endl;
-	return mesh;
+	//std::cout << "Mesh loaded successfully" << std::endl;
 }
 
 void Mesh::StripPath(std::wstring& path)
@@ -364,4 +357,36 @@ void Mesh::Render(Graphics& graphics, glm::mat4x4 const& model)
 		glDisableVertexAttribArray(0);
 		glDeleteVertexArrays(1, &vertexArrayID);
 	}
+}
+
+int Mesh::GetIndex() const
+{
+	return m_index;
+}
+
+int Mesh::GetVersion() const
+{
+	return m_version;
+}
+
+void Mesh::SetIndex(int index)
+{
+	m_index = index;
+}
+
+void Mesh::SetVersion(int version)
+{
+	m_version = version;
+}
+
+Mesh::Mesh() :
+m_index(-1),
+m_version(-1),
+m_ready(false)
+{
+}
+
+bool Mesh::IsReady() const
+{
+	return m_ready;
 }

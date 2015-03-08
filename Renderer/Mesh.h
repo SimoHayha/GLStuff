@@ -46,6 +46,8 @@ void MeshStream::ReadStruct(T* output, size_t size /*= sizeof(T)*/)
 #endif
 }
 
+class MeshSlotMap;
+
 class Mesh
 {
 public:
@@ -80,13 +82,21 @@ public:
 		GLuint	PixelShader;
 	};
 
+	Mesh();
+
 	void	Render(Graphics& graphics, glm::mat4x4 const& model);
 
-	static std::future<void>	LoadFromFileAsync(Graphics& graphics, std::wstring const& meshFilename, std::wstring const& shaderPathLocation, std::wstring const& texturePathLocation, std::vector<Mesh*>& loadedMesh, bool clearLoadedMeshesVector = true);
+	static std::future<void>	LoadFromFileAsync(bool& ready, Graphics& graphics, std::wstring const& meshFilename, std::wstring const& shaderPathLocation, std::wstring const& texturePathLocation, MeshSlotMap* slotMap);
+
+	int		GetIndex() const;
+	int		GetVersion() const;
+	bool	IsReady() const;
+	void	SetIndex(int index);
+	void	SetVersion(int version);
 
 private:
-	static Mesh*	Read(Graphics& graphics, MeshStream& stream, std::wstring const& shaderPathLocation, std::wstring const& texturePathLocation);
-	static void		StripPath(std::wstring& path);
+	static void	Read(Mesh& mesh, Graphics& graphics, MeshStream& stream, std::wstring const& shaderPathLocation, std::wstring const& texturePathLocation);
+	static void	StripPath(std::wstring& path);
 
 private:
 	std::vector<SubMesh>	m_submeshes;
@@ -95,6 +105,10 @@ private:
 	std::vector<GLuint>		m_skinningVertexBuffer;
 	std::vector<GLuint>		m_indexBuffers;
 	std::vector<Triangle>	m_triangles;
+
+	int		m_index;
+	int		m_version;
+	bool	m_ready;
 
 	std::wstring	m_name;
 };

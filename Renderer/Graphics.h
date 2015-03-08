@@ -88,12 +88,19 @@ struct MiscConstants
 };
 
 struct GLFWwindow;
+class Mesh;
 
 class Graphics
 {
 public:
 	Graphics();
 	~Graphics();
+
+	Graphics(Graphics const&) = delete;
+	Graphics(Graphics&&) = delete;
+	Graphics&	operator=(Graphics const&) = delete;
+	Graphics&	operator=(Graphics&&) = delete;
+
 
 	void		SetWindow(GLFWwindow* window);
 	GLFWwindow*	GetWindow() const;
@@ -105,8 +112,10 @@ public:
 
 	std::future<GLuint>	GetOrCreateShaderAsync(std::string const& shaderName);
 
+	void	Update();
 	void	UpdateGenBuffers();
 	void	AddGenBuffers(GenBuffers* task);
+	void	AddMeshToCollect(Mesh* mesh);
 
 	void	UpdateMaterialConstants(MaterialConstants& data) const;
 	void	UpdateLightConstants(LightConstants& data) const;
@@ -123,7 +132,7 @@ private:
 	GLuint	m_miscConstants;
 
 	std::list<GenBuffers*>	m_genBuffers;
-	std::mutex*				m_genBuffersLock;
+	std::mutex				m_genBuffersLock;
 
 	GLFWwindow*	m_window;
 };
