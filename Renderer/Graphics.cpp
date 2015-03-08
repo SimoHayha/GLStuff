@@ -1,5 +1,20 @@
+#include <iostream>
+
+#include <gl/glew.h>
+#include <GLFW/glfw3.h>
+
 #include "Resources.h"
 #include "Graphics.h"
+
+Graphics::Graphics()
+{
+	m_genBuffersLock = new std::mutex;
+}
+
+Graphics::~Graphics()
+{
+	delete m_genBuffersLock;
+}
 
 std::future<GLuint> Graphics::GetOrCreateShaderAsync(std::string const& shaderName)
 {
@@ -49,4 +64,39 @@ void Graphics::UpdateObjectConstants(ObjectConstants& data) const
 void Graphics::UpdateMiscConstants(MiscConstants& data) const
 {
 
+}
+
+void Graphics::SetWindow(GLFWwindow* window)
+{
+	m_window = window;
+}
+
+GLFWwindow* Graphics::GetWindow() const
+{
+	return m_window;
+}
+
+void Graphics::UpdateGenBuffers()
+{
+	if (m_genBuffersLock->try_lock())
+	{
+		for (auto& task : m_genBuffers)
+		{
+			//std::lock_guard<std::mutex>	lk(*task->Mutex);
+			std::cout << "Generate " << task->Count << " buffer(s) for thread " << task->ThreadId << std::endl;
+			task->BuffersIds.resize(task->Count);
+			glGenBuffers(task->Count, &task->BuffersIds[0]);
+			std::cout << "Buffer " << task->BuffersIds[0] << " created" << std::endl;
+			task->Condition.notify_one();
+		}
+		m_genBuffers.clear();
+		m_genBuffersLock->unlock();
+	}
+}
+
+void Graphics::AddGenBuffers(GenBuffers* task)
+{
+	m_genBuffersLock->lock();
+	m_genBuffers.push_back(task);
+	m_genBuffersLock->unlock();
 }

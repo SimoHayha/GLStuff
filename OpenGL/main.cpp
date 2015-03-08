@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -9,25 +11,27 @@ public:
 	App() {}
 	~App() {}
 
-	bool	Initialize() override
+	bool	OnInitialize() override
 	{
 		m_graphics.reset(new Graphics);
+		m_graphics->SetWindow(m_window);
 		m_renderer.reset(new Renderer);
 
-		if (!m_renderer->Initialize())
+		if (!m_renderer->Initialize(*m_graphics.get()))
 			return false;
 
 		return true;
 	}
 
-	void	Deinitialize() override
+	void	OnDeinitialize() override
 	{
 		m_graphics.reset(nullptr);
 		m_renderer.reset(nullptr);
 	}
 
-	void	Render() override
+	void	OnRender() override
 	{
+		m_graphics->UpdateGenBuffers();
 		m_renderer->Render(*m_graphics.get());
 	}
 };
@@ -35,7 +39,6 @@ public:
 int create_window()
 {
 	GLFWwindow* window;
-	App			app;
 
 	/* Initialize the library */
 	if (!glfwInit())
@@ -47,12 +50,16 @@ int create_window()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	/* Create a windowed mode window and its OpenGL context */
-	window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+	glfwWindowHint(GLFW_VISIBLE, GL_TRUE);
+	window = glfwCreateWindow(640, 480, "Hello World", nullptr, nullptr);
 	if (!window)
 	{
 		glfwTerminate();
 		return -1;
 	}
+
+	App	app;
+	app.SetWindow(window);
 
 	/* Make the window's context current */
 	glfwMakeContextCurrent(window);

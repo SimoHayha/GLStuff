@@ -31,6 +31,9 @@
     <Filter Include="Source Files\Interface">
       <UniqueIdentifier>{85aac2f8-b879-44ad-9d6d-0b67b4bf076c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\System">
+      <UniqueIdentifier>{95e794ae-d694-47b2-86ee-6a298dd63022}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resources.h">
@@ -56,6 +59,12 @@
     </ClInclude>
     <ClInclude Include="Triangle.h">
       <Filter>Header Files\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Input.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Header Files\System</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -14,7 +14,7 @@ public:
 	Renderer();
 	~Renderer();
 
-	bool	Initialize();
+	bool	Initialize(Graphics& graphics);
 	void	Deinitialize();
 	void	Render(Graphics& graphics);
 

@@ -3,12 +3,15 @@
 #include <algorithm>
 #include <cstdint>
 
-#include <codecvt>
-#include <fcntl.h>
-#include <io.h>
-#include <intrin.h>
+//#include <codecvt>
+//#include <fcntl.h>
+//#include <io.h>
+//#include <intrin.h>
 
 #include "Mesh.h"
+
+#include <gl\glew.h>
+#include <GLFW/glfw3.h>
 
 MeshStream::MeshStream(std::ifstream& stream) :
 m_stream(stream)
@@ -62,9 +65,20 @@ std::future<void> Mesh::LoadFromFileAsync(Graphics& graphics, std::wstring const
 	if (clearLoadedMeshesVector)
 		loadedMesh.clear();
 
-	std::vector<Mesh*>	tmpLoadedMesh;
-	auto	fct = std::async([](Graphics& graphics, std::wstring const& meshFilename, std::wstring const& shaderPathLocation, std::wstring const& texturePathLocation, std::vector<Mesh*>* loadedMesh)
+	glewExperimental = true; // Needed in core profile 
+	glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	GLFWwindow* threadWin = glfwCreateWindow(1, 1, "Thread Window", NULL, graphics.GetWindow());
+
+	auto	fct = std::async([&graphics, threadWin, meshFilename, shaderPathLocation, texturePathLocation, &loadedMesh](/*GLFWwindow* threadWin, Graphics& graphics, std::wstring const& meshFilename, std::wstring const& shaderPathLocation, std::wstring const& texturePathLocation, std::vector<Mesh*>* loadedMesh*/)
 	{
+		glfwMakeContextCurrent(threadWin);
+		GLenum	code = glewInit();
+		if (code != GLEW_OK)
+			std::cerr << "Cannot init glew for thread" << std::endl;
+
 		std::ifstream	file;
 		file.open(meshFilename, std::ios::binary);
 		if (!file.is_open())
@@ -83,37 +97,12 @@ std::future<void> Mesh::LoadFromFileAsync(Graphics& graphics, std::wstring const
 		{
 			Mesh*	mesh = Read(graphics, stream, shaderPathLocation, texturePathLocation);
 			if (mesh)
-				loadedMesh->push_back(mesh);
+				loadedMesh.push_back(mesh);
 		}
 
-	}, graphics, meshFilename, shaderPathLocation, texturePathLocation, &tmpLoadedMesh);
+		glfwDestroyWindow(threadWin);
 
-	fct.wait();
-
-	for (auto& mesh : tmpLoadedMesh)
-	{
-		for (uint32_t i = 0u; i < mesh->m_vertexBuffers.size(); ++i)
-		{
-			// Create an vertex buffer for this
-			glGenBuffers(1, &mesh->m_vertexBuffers[i]);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->m_vertexBuffers[i]);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->m_tmpVertexBuffers[i].size() * sizeof(Vertex), &mesh->m_tmpVertexBuffers[i][0], GL_STATIC_DRAW);
-		}
-
-		for (uint32_t i = 0u; i < mesh->m_indexBuffers.size(); ++i)
-		{
-			// Create an index buffer for this
-			glGenBuffers(1, &mesh->m_indexBuffers[i]);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->m_indexBuffers[i]);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->m_tmpIndexBuffers[i].size() * sizeof(unsigned int), &mesh->m_tmpIndexBuffers[i][0], GL_STATIC_DRAW);
-		}
-
-		// Clear the temporary buffers
-		mesh->m_tmpVertexBuffers.clear();
-		mesh->m_tmpIndexBuffers.clear();
-
-		loadedMesh.push_back(mesh);
-	}
+	});
 
 	return fct;
 }
@@ -158,6 +147,7 @@ Mesh* Mesh::Read(Graphics& graphics, MeshStream& stream, std::wstring const& sha
 		std::cout << "SpecularPower" << material.SpecularPower << std::endl;
 		std::cout << "Emissive" << material.Emissive[0] << "," << material.Emissive[1] << "," << material.Emissive[2] << "," << material.Emissive[3] << std::endl;
 
+		// TODO: do something
 		// Assign the vertex shader and sampler state
 		//material.VertexShader = graphics.GetVertexShader();
 		//material.SamplerState = graphics.GetSamplerState();
@@ -179,11 +169,12 @@ Mesh* Mesh::Read(Graphics& graphics, MeshStream& stream, std::wstring const& sha
 				// Append the base path
 				sourceFile = shaderPathLocation + sourceFile;
 
+				// TODO: load the pixel shader
 				// Get or create the pixel shader
-				innerTasks.push_back(std::async([&material](Graphics& graphics, std::wstring const& sourceFile)
-				{
-					//material.PixelShader = graphics.GetOrCreatePixelShader(sourceFile);
-				}, graphics, sourceFile));
+				//innerTasks.push_back(std::async([&material, graphics, sourceFile](Graphics& graphics, std::wstring const& sourceFile)
+				//{
+				//	//material.PixelShader = graphics.GetOrCreatePixelShader(sourceFile);
+				//}));
 			}
 		}
 
@@ -201,11 +192,12 @@ Mesh* Mesh::Read(Graphics& graphics, MeshStream& stream, std::wstring const& sha
 				// Append the base path
 				sourceFile = texturePathLocation + sourceFile;
 
+				// TODO: load the texture
 				// Get or create the texture
-				innerTasks.push_back(std::async([&material, t](Graphics& graphics, std::wstring const& sourceFile)
-				{
-					//material.Textures[t] = graphics.GetOrCreateTexture(sourceFile);
-				}, graphics, sourceFile));
+				//innerTasks.push_back(std::async([&material, t, graphics, sourceFile](Graphics& graphics, std::wstring const& sourceFile)
+				//{
+				//	//material.Textures[t] = graphics.GetOrCreateTexture(sourceFile);
+				//}));
 			}
 		}
 	}
@@ -230,18 +222,36 @@ Mesh* Mesh::Read(Graphics& graphics, MeshStream& stream, std::wstring const& sha
 	uint32_t	numIndexBuffers = stream.ReadUInt32();
 	mesh->m_indexBuffers.resize(numIndexBuffers);
 
-	mesh->m_tmpIndexBuffers.resize(numIndexBuffers);
+	std::vector<std::vector<USHORT>> indexBuffers(numIndexBuffers);
 
 	for (uint32_t i = 0u; i < numIndexBuffers; ++i)
 	{
 		uint32_t	ibCount = stream.ReadUInt32();
 		if (ibCount > 0u)
 		{
-			mesh->m_tmpIndexBuffers[i].resize(ibCount);
+			indexBuffers[i].resize(ibCount);
 
 			// Read in the index data
-			for (USHORT& component : mesh->m_tmpIndexBuffers[i])
+			for (USHORT& component : indexBuffers[i])
 				component = stream.ReadUInt16();
+
+			GenBuffers*	task = new GenBuffers();
+			task->ThreadId = std::this_thread::get_id().hash();
+			task->Count = 1;
+
+			graphics.AddGenBuffers(task);
+
+			std::unique_lock<std::mutex>	lock(*task->Mutex);
+			task->Condition.wait(lock);
+			lock.unlock();
+
+			mesh->m_indexBuffers[i] = task->BuffersIds[0];
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->m_indexBuffers[i]);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, ibCount * sizeof(USHORT), &indexBuffers[i][0], GL_STATIC_DRAW);
+
+			std::cout << glewGetErrorString(glGetError()) << std::endl;
+
+			delete task;
 		}
 	}
 
@@ -249,25 +259,41 @@ Mesh* Mesh::Read(Graphics& graphics, MeshStream& stream, std::wstring const& sha
 	uint32_t	numVertexBuffers = stream.ReadUInt32();
 	mesh->m_vertexBuffers.resize(numVertexBuffers);
 
-	mesh->m_tmpVertexBuffers.resize(numVertexBuffers);
+	std::vector<std::vector<Vertex>> vertexBuffers(numVertexBuffers);
 
 	for (uint32_t i = 0u; i < numVertexBuffers; ++i)
 	{
 		uint32_t	vbCount = stream.ReadUInt32();
 		if (vbCount > 0u)
 		{
-			mesh->m_tmpVertexBuffers[i].resize(vbCount);
+			vertexBuffers[i].resize(vbCount);
 
 			// Read in the vertex data
-			stream.ReadStruct(&mesh->m_tmpVertexBuffers[i][0], vbCount * sizeof(Vertex));
+			stream.ReadStruct(&vertexBuffers[i][0], vbCount * sizeof(Vertex));
+
+			GenBuffers*	task = new GenBuffers();
+			task->ThreadId = std::this_thread::get_id().hash();
+			task->Count = 1;
+
+			graphics.AddGenBuffers(task);
+
+			std::unique_lock<std::mutex>	lock(*task->Mutex);
+			task->Condition.wait(lock);
+			lock.unlock();
+
+			mesh->m_vertexBuffers[i] = task->BuffersIds[0];
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->m_vertexBuffers[i]);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, vbCount * sizeof(Vertex), &vertexBuffers[i][0], GL_STATIC_DRAW);
+
+			delete task;
 		}
 	}
 
 	// Create the triangle array for each submesh
 	for (SubMesh& subMesh : mesh->m_submeshes)
 	{
-		std::vector<USHORT>&	ib = mesh->m_tmpIndexBuffers[subMesh.IndexBufferIndex];
-		std::vector<Vertex>&	vb = mesh->m_tmpVertexBuffers[subMesh.VertexBufferIndex];
+		std::vector<USHORT>&	ib = indexBuffers[subMesh.IndexBufferIndex];
+		std::vector<Vertex>&	vb = vertexBuffers[subMesh.VertexBufferIndex];
 
 		for (uint32_t j = 0u; j < ib.size(); j += 3u)
 		{
@@ -291,6 +317,9 @@ Mesh* Mesh::Read(Graphics& graphics, MeshStream& stream, std::wstring const& sha
 			mesh->m_triangles.push_back(tri);
 		}
 	}
+
+	indexBuffers.clear();
+	vertexBuffers.clear();
 
 	// TODO: Read the skinning vertex buffer
 

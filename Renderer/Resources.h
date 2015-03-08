@@ -6,7 +6,7 @@ class Resources
 {
 public:
 	static GLuint	LoadShader(char const* vertexFilePath, char const* fragmentFilePath);
-
+	 
 protected:
 	Resources();
 };

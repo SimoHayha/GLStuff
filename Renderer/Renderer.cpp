@@ -4,6 +4,7 @@
 #include <glm\gtc\matrix_transform.hpp>
 
 #include "Resources.h"
+#include "Graphics.h"
 #include "Mesh.h"
 #include "Renderer.h"
 
@@ -17,11 +18,10 @@ Renderer::~Renderer()
 
 }
 
-bool Renderer::Initialize()
+bool Renderer::Initialize(Graphics& graphics)
 {
 	m_shader = Resources::LoadShader("diffuse.vertex", "diffuse.fragment");
 
-	Graphics graphics;
 	auto	loadHumanoidTask = Mesh::LoadFromFileAsync(graphics, L"humanoid.cmo", L"", L"", m_meshes);
 	//loadHumanoidTask.wait();
 
@@ -78,8 +78,7 @@ void Renderer::Render(Graphics& graphics)
 	// 1rst attribute buffer : vertices
 	for (auto& mesh : m_meshes)
 	{
-		Graphics	gfx;
-		mesh->Render(gfx, Model);
+		mesh->Render(graphics, Model);
 
 		//glEnableVertexAttribArray(0);
 		//glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);

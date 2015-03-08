@@ -96,8 +96,5 @@ private:
 	std::vector<GLuint>		m_indexBuffers;
 	std::vector<Triangle>	m_triangles;
 
-	std::vector<std::vector<Vertex>>	m_tmpVertexBuffers;
-	std::vector<std::vector<USHORT>>	m_tmpIndexBuffers;
-
 	std::wstring	m_name;
 };
