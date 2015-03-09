@@ -75,20 +75,20 @@ bool Mesh::Initialize(RawMesh* rawMesh)
 {
 	m_rawMesh = rawMesh;
 
-	int	vertexBufferCount = m_rawMesh->Data().Vertices.size();
-	int	indexBufferCount = m_rawMesh->Data().Indices.size();
+	int	vertexBufferCount = static_cast<int>(m_rawMesh->Data().Vertices.size());
+	int	indexBufferCount = static_cast<int>(m_rawMesh->Data().Indices.size());
 
 	m_vertexBuffers.resize(vertexBufferCount);
 	m_indexBuffers.resize(indexBufferCount);
 
-	for (uint32_t i = 0u; i < vertexBufferCount; ++i)
+	for (int i = 0; i < vertexBufferCount; ++i)
 	{
 		glGenBuffers(1, &m_vertexBuffers[i]);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexBuffers[i]);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_rawMesh->Data().Vertices[i].size() * sizeof(Vertex), &m_rawMesh->Data().Vertices[i][0], GL_STATIC_DRAW);
 	}
 
-	for (uint32_t i = 0u; i < indexBufferCount; ++i)
+	for (int i = 0; i < indexBufferCount; ++i)
 	{
 		glGenBuffers(1, &m_indexBuffers[i]);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBuffers[i]);
