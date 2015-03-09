@@ -30,7 +30,7 @@ bool Renderer::Initialize(Graphics& graphics)
 
 	if (!m_meshes.Initialize())
 		return false;
-	if (!m_meshLoader.Initialize(&m_meshes))
+	if (!m_meshLoader.Initialize(&m_meshes, 2))
 		return false;
 
 	int numMeshes = 1000;
