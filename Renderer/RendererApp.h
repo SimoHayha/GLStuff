@@ -1,12 +1,12 @@
 #pragma once
 
-#include <gl\glew.h>
-#include <GLFW/glfw3.h>
-
 #include <memory>
 
 #include "Graphics.h"
 #include "Renderer.h"
+
+#include <gl\glew.h>
+#include <GLFW/glfw3.h>
 
 class RendererApp
 {

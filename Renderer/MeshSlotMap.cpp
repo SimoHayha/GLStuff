@@ -6,6 +6,8 @@
 
 Mesh* MeshSlotMap::Get(MeshHandler id)
 {
+	std::unique_lock<std::mutex>	lock(m_lock);
+
 	int	index = m_slots[id.Index];
 	if (m_objects[index].GetVersion() == id.Version)
 		return &m_objects[index];
@@ -15,6 +17,8 @@ Mesh* MeshSlotMap::Get(MeshHandler id)
 
 Mesh* MeshSlotMap::CreateObject()
 {
+	std::unique_lock<std::mutex>	lock(m_lock);
+
 	int	index = m_freeList.front();
 	m_freeList.pop_front();
 
@@ -33,6 +37,8 @@ Mesh* MeshSlotMap::CreateObject()
 
 void MeshSlotMap::Remove(MeshHandler id)
 {
+	std::unique_lock<std::mutex>	lock(m_lock);
+
 	int	index = m_slots[id.Index];
 	if (m_objects[index].GetVersion() == id.Version)
 	{
@@ -65,6 +71,10 @@ void MeshSlotMap::Deinitialize()
 
 void MeshSlotMap::Render(Graphics& graphics, GLuint MatrixID, glm::mat4 proj, glm::mat4 view)
 {
+	int	mul = m_count / 2;
+	if (m_count == 1)
+		mul = 1;
+
 	for (int i = 0; i < m_count; ++i)
 	{
 		if (!m_objects[i].IsReady())
@@ -72,7 +82,7 @@ void MeshSlotMap::Render(Graphics& graphics, GLuint MatrixID, glm::mat4 proj, gl
 
 		glm::mat4 Model = glm::mat4(1.0f);  // Changes for each model !
 
-		Model = glm::translate(Model, glm::vec3(100.0f * i, 0.0f, 0.0f));
+		Model = glm::translate(Model, glm::vec3(25.0f * (i - mul), 0.0f, 0.0f));
 
 		glm::mat4 MVP = proj * view * Model; // Remember, matrix multiplication is the other way around
 
@@ -88,4 +98,9 @@ MeshSlotMap::MeshSlotMap()
 
 MeshSlotMap::~MeshSlotMap()
 {
+}
+
+int MeshSlotMap::Count() const
+{
+	return m_count;
 }

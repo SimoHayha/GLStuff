@@ -2,10 +2,11 @@
 
 #include <vector>
 
-#include <GL/glew.h>
-
+#include "MeshLoader.h"
 #include "Graphics.h"
 #include "MeshSlotMap.h"
+
+#include <GL/glew.h>
 
 class Mesh;
 
@@ -28,6 +29,7 @@ private:
 	GLuint	m_shader;
 
 	MeshSlotMap	m_meshes;;
+	MeshLoader	m_meshLoader;
 
 	bool	m_ready;
 };

@@ -1,10 +1,10 @@
 #include <iostream>
 
-#include <gl/glew.h>
-#include <GLFW/glfw3.h>
-
 #include "Resources.h"
 #include "Graphics.h"
+
+#include <gl/glew.h>
+#include <GLFW/glfw3.h>
 
 Graphics::Graphics()
 {

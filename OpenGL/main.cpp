@@ -1,9 +1,9 @@
 #include <iostream>
 
+#include "RendererApp.h"
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-
-#include "RendererApp.h"
 
 class App : public RendererApp
 {

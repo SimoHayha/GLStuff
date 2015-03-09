@@ -34,12 +34,15 @@
     <Filter Include="Header Files\System">
       <UniqueIdentifier>{95e794ae-d694-47b2-86ee-6a298dd63022}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Resources\Mesh">
+      <UniqueIdentifier>{a1b4ba07-55da-4680-bb8e-f030427b959e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Resources\Mesh">
+      <UniqueIdentifier>{3c8edc97-08aa-4f8e-becf-2f671e69fd51}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resources.h">
-      <Filter>Header Files\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="Mesh.h">
       <Filter>Header Files\Resources</Filter>
     </ClInclude>
     <ClInclude Include="Defines.h">
@@ -54,23 +57,41 @@
     <ClInclude Include="RendererApp.h">
       <Filter>Header Files\Interface</Filter>
     </ClInclude>
-    <ClInclude Include="Vertex.h">
-      <Filter>Header Files\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="Triangle.h">
-      <Filter>Header Files\Resources</Filter>
-    </ClInclude>
     <ClInclude Include="Input.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="MeshContainer.h">
-      <Filter>Header Files\Resources</Filter>
-    </ClInclude>
     <ClInclude Include="MeshSlotMap.h">
       <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="BlockingQueue.hpp">
+      <Filter>Header Files\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshContainer.h">
+      <Filter>Header Files\Resources\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshLoader.h">
+      <Filter>Header Files\Resources\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Triangle.h">
+      <Filter>Header Files\Resources\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Vertex.h">
+      <Filter>Header Files\Resources\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="RawMesh.h">
+      <Filter>Header Files\Resources\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshStream.hpp">
+      <Filter>Header Files\Resources\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="RawMeshData.h">
+      <Filter>Header Files\Resources\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>Header Files\Resources\Mesh</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -86,14 +107,23 @@
     <ClCompile Include="RendererApp.cpp">
       <Filter>Source Files\Interface</Filter>
     </ClCompile>
-    <ClCompile Include="Mesh.cpp">
-      <Filter>Source Files\Resources</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshContainer.cpp">
-      <Filter>Source Files\Resources</Filter>
-    </ClCompile>
     <ClCompile Include="MeshSlotMap.cpp">
       <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Source Files\Resources\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshContainer.cpp">
+      <Filter>Source Files\Resources\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshLoader.cpp">
+      <Filter>Source Files\Resources\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshStream.cpp">
+      <Filter>Source Files\Resources\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="RawMesh.cpp">
+      <Filter>Source Files\Resources\Mesh</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

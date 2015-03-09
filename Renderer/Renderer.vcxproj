@@ -19,13 +19,18 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BlockingQueue.hpp" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Defines.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MeshContainer.h" />
+    <ClInclude Include="MeshLoader.h" />
     <ClInclude Include="MeshSlotMap.h" />
+    <ClInclude Include="MeshStream.hpp" />
+    <ClInclude Include="RawMesh.h" />
+    <ClInclude Include="RawMeshData.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="RendererApp.h" />
     <ClInclude Include="Resources.h" />
@@ -36,7 +41,10 @@
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="MeshContainer.cpp" />
+    <ClCompile Include="MeshLoader.cpp" />
     <ClCompile Include="MeshSlotMap.cpp" />
+    <ClCompile Include="MeshStream.cpp" />
+    <ClCompile Include="RawMesh.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="RendererApp.cpp" />
     <ClCompile Include="Resources.cpp" />
