@@ -97,14 +97,5 @@ bool Mesh::Initialize(RawMesh* rawMesh)
 
 	m_ready = true;
 
-
-	//			mesh.m_indexBuffers[i] = task->BuffersIds[0];
-	//			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.m_indexBuffers[i]);
-	//			glBufferData(GL_ELEMENT_ARRAY_BUFFER, ibCount * sizeof(USHORT), &indexBuffers[i][0], GL_STATIC_DRAW);
-
-	//			mesh.m_vertexBuffers[i] = task->BuffersIds[0];
-	//			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.m_vertexBuffers[i]);
-	//			glBufferData(GL_ELEMENT_ARRAY_BUFFER, vbCount * sizeof(Vertex), &vertexBuffers[i][0], GL_STATIC_DRAW);
-
 	return true;
 }

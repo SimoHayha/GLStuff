@@ -36,10 +36,6 @@ bool Renderer::Initialize(Graphics& graphics)
 	int numMeshes = 1000;
 	for (int i = 0; i < numMeshes; ++i)
 	{
-		/* TODO: Implement mesh loader with maximum async operation
-		** Right now a too big number of meshes at the same time, will not work, the system cannot create as much OpenGL context
-		*/
-		//Mesh::LoadFromFileAsync(m_ready, graphics, L"humanoid.cmo", L"", L"", &m_meshes);
 		if (i % 2 == 0)
 			m_meshLoader.LoadMesh(L"humanoid.cmo", L"", L"");
 		else
